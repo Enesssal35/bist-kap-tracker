@@ -335,12 +335,24 @@ def manual_scan(background_tasks: BackgroundTasks):
     background_tasks.add_task(task)
     return {"status": "success", "message": "Manual scan started in background."}
 
-# Serve Static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Serve Static files dynamically (works whether files are in root or /static folder)
+BASE_DIR = os.path.dirname(__file__)
+STATIC_DIR = os.path.join(BASE_DIR, "static") if os.path.exists(os.path.join(BASE_DIR, "static")) else BASE_DIR
+
+if os.path.exists(os.path.join(BASE_DIR, "static")):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+else:
+    @app.get("/static/{file_path:path}")
+    def serve_static_root(file_path: str):
+        file_full_path = os.path.join(BASE_DIR, file_path)
+        if os.path.exists(file_full_path):
+            return FileResponse(file_full_path)
+        return FileResponse(os.path.join(BASE_DIR, "index.html"))
 
 @app.get("/")
 def serve_index():
-    return FileResponse("static/index.html")
+    idx_path = os.path.join(STATIC_DIR, "index.html") if os.path.exists(os.path.join(STATIC_DIR, "index.html")) else os.path.join(BASE_DIR, "index.html")
+    return FileResponse(idx_path)
 
 @app.on_event("startup")
 def startup_event():

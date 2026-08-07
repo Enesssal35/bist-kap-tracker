@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIST Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=3">
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+            </div>
+            <div class="logo-text">
+                <h2>BIST Tracker</h2>
+                <span>Finansal Analiz & KAP Bildirimleri</span>
+            </div>
+        </div>
+        
+        <div class="sidebar-menu">
+            <span class="menu-label">PANELLER</span>
+            <a href="#" class="menu-item active" onclick="switchTab('kap')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                KAP Bildirimleri
+            </a>
+            <a href="#" class="menu-item" onclick="switchTab('heatmap')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Finansal Isı Haritası
+            </a>
+            <a href="#" class="menu-item" onclick="openAddStockModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Ayarlar / Hisseler
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="auto-scan-card">
+                <div class="auto-scan-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    OTOMATİK TARAMA
+                </div>
+                <div class="scan-item">
+                    <span class="status-dot green"></span>
+                    <span>09:30 &mdash; Tamamlandı</span>
+                </div>
+                <div class="scan-item">
+                    <span class="status-dot green"></span>
+                    <span>16:00 &mdash; Tamamlandı</span>
+                </div>
+                <div class="scan-countdown">Sonraki tarama: 10s 6d 15sn</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-left"></div>
+            
+            <div class="top-center" id="newAlertBadge" style="display: none;">
+                <div class="alert-badge">
+                    <span class="bell-icon">🔔</span> Yeni bildirim!
+                </div>
+            </div>
+            
+            <div class="top-right">
+                <div class="clock" id="clockDisplay">23:23:44 - 07 Ağu Cts</div>
+                <button class="icon-btn" onclick="openAddStockModal()">
+                    ⚙️ Hisseler
+                </button>
+                <div style="position: relative; display: inline-block;">
+                    <button class="primary-btn" id="manualScanBtn" onclick="triggerManualScan()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l2-9 5 18 3-10h4"/></svg>
+                        Manuel Tara
+                    </button>
+                    <div id="scanStatusText" style="position: absolute; top: 120%; right: 0; font-size: 0.75rem; font-weight: 600; color: var(--accent); white-space: nowrap; display: none;">
+                        THYAO taranıyor... Kalan: ~15sn
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KAP Tab -->
+        <div id="kapTab" class="tab-content active">
+            <div class="page-header">
+                <h2>KAP Bildirimleri</h2>
+                <p>Faaliyet raporları, sözleşmeler, sermaye artırımı, CapEx ve daha fazlası</p>
+            </div>
+            
+            <!-- Stat Cards -->
+            <div class="stat-cards">
+                <div class="stat-card">
+                    <div class="stat-title">TOPLAM BİLDİRİM</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title"><span class="status-dot green"></span> POZİTİF</div>
+                    <div class="stat-value text-green" id="statPositive">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title"><span class="status-dot red"></span> NEGATİF</div>
+                    <div class="stat-value text-red" id="statNegative">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">YÜKSEK ETKİ (≥7)</div>
+                    <div class="stat-value text-yellow" id="statHighImpact">0</div>
+                </div>
+            </div>
+            
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>HİSSE</label>
+                    <select id="stockFilter" onchange="selectStockFilter(this.value)">
+                        <option value="Tümü">Tümü</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>SİNYAL</label>
+                    <div class="pill-group" id="signalPillGroup">
+                        <div class="pill active" onclick="selectSignalFilter('Tümü', this)">Tümü</div>
+                        <div class="pill" onclick="selectSignalFilter('Pozitif', this)"><span class="status-dot green"></span> Pozitif</div>
+                        <div class="pill" onclick="selectSignalFilter('Nötr', this)"><span class="status-dot yellow"></span> Nötr</div>
+                        <div class="pill" onclick="selectSignalFilter('Negatif', this)"><span class="status-dot red"></span> Negatif</div>
+                    </div>
+                </div>
+                
+                <div class="filter-group flex-1">
+                    <label>KAP ETKİSİ (MİN): <span id="impactValue">0</span></label>
+                    <input type="range" id="impactSlider" min="0" max="10" value="0" step="1" oninput="document.getElementById('impactValue').innerText = this.value; renderKaps();">
+                </div>
+                
+                <div class="filter-group">
+                    <label>BAŞLANGIÇ TARİHİ</label>
+                    <div class="date-input-wrapper">
+                        <input type="date" id="dateFilter" onchange="renderKaps()">
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>KATEGORİ</label>
+                    <select id="categoryFilter" onchange="renderKaps()">
+                        <option value="Tümü">Tümü</option>
+                        <option value="Faaliyet Raporu">Faaliyet Raporu</option>
+                        <option value="Finansal Rapor">Finansal Rapor</option>
+                        <option value="Yeni İş İlişkisi">Yeni İş İlişkisi</option>
+                        <option value="Yeni Sipariş">Yeni Sipariş</option>
+                        <option value="Geleceğe Dönük Değerlendirme">Geleceğe Dönük Değ.</option>
+                        <option value="Duran Varlık Alımı (Capex)">Capex</option>
+                        <option value="Teşvik">Teşvik</option>
+                        <option value="Sermaye Artırımı">Sermaye Artırımı</option>
+                        <option value="Borçlanma">Borçlanma</option>
+                    </select>
+                </div>
+                
+                <button class="outline-btn" onclick="clearFilters()">Temizle</button>
+            </div>
+            
+            <!-- Main Content Area (Grid or Empty State) -->
+            <div id="kapContentArea" class="kap-content-area">
+                <div class="empty-state" id="emptyState">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    <p>Henüz bildirim yok veya filtre sonucu boş.<br>Manuel tarama butonuna tıklayın.</p>
+                </div>
+                <div class="kap-grid" id="kapGrid" style="display: none;">
+                    <!-- Kap Cards go here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Heatmap Tab -->
+        <div id="heatmapTab" class="tab-content" style="display: none;">
+            <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h2>Finansal Isı Haritası</h2>
+                    <p>Geçmiş 20 Çeyrek ve Gelecek Projeksiyonları</p>
+                </div>
+                <div class="filter-group">
+                    <label>METRİK SEÇİMİ</label>
+                    <select id="metricSelector" onchange="renderHeatmap()">
+                        <option value="roic_vs_wacc">Değer Yaratımı (ROIC > WACC)</option>
+                        <option value="roe">ROE Trendi</option>
+                        <option value="wacc">WACC Trendi</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="heatmap-wrapper">
+                    <table class="heatmap" id="heatmapTable">
+                        <!-- Dynamic Content -->
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="stockModal">
+        <div class="modal">
+            <h3>Hisse Yönetimi</h3>
+            <div class="modal-body">
+                <div id="stockList" class="modal-stock-list">
+                    <!-- Current stocks -->
+                </div>
+                <div class="add-stock-box">
+                    <input type="text" id="newStockInput" placeholder="Örn: THYAO" maxlength="5">
+                    <button class="primary-btn" onclick="addStock()">Ekle</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="outline-btn" onclick="closeAddStockModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">İşlem başarılı.</div>
+
+    <script src="/static/app.js?v=7"></script>
+</body>
+</html>
