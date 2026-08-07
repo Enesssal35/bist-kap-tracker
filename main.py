@@ -255,11 +255,20 @@ def get_kap_notifications_html(
     
     html = ""
     for notif in filtered:
+        pub_date_str = notif.get('publish_date', '')
+        try:
+            from datetime import datetime
+            dt = datetime.strptime(pub_date_str.split('.')[0], "%Y-%m-%d %H:%M:%S")
+            formatted_date = dt.strftime("%d.%m.%Y - %H:%M")
+        except Exception:
+            formatted_date = pub_date_str
+
         if notif.get('is_read') == 0:
             html += f"""
                 <div class="kap-card" style="opacity: 0.7;">
-                    <div class="kap-card-meta" style="font-size:0.75rem; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.3rem;">
+                    <div class="kap-card-meta" style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.3rem;">
                         <span>{notif['stock_code']} - {notif['category']}</span>
+                        <span style="font-size:0.7rem; color:var(--accent); background:rgba(6,182,212,0.1); padding:0.15rem 0.5rem; border-radius:4px; font-weight:600;">🕒 {formatted_date}</span>
                     </div>
                     <div class="kap-card-title" style="margin-top:0.5rem; font-size:1rem; font-weight:700; color:var(--accent);">{notif['title']}</div>
                     <div class="kap-card-summary" style="margin-top:0.5rem; font-size:0.85rem; line-height:1.5; color:var(--text-muted);">
@@ -281,8 +290,9 @@ def get_kap_notifications_html(
         
         html += f"""
             <div class="kap-card">
-                <div class="kap-card-meta" style="font-size:0.75rem; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.3rem;">
+                <div class="kap-card-meta" style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.3rem;">
                     <span>{notif['stock_code']} - {notif['category']}</span>
+                    <span style="font-size:0.7rem; color:var(--accent); background:rgba(6,182,212,0.1); padding:0.15rem 0.5rem; border-radius:4px; font-weight:600;">🕒 {formatted_date}</span>
                 </div>
                 <div class="kap-card-title" style="margin-top:0.5rem; font-size:1rem; font-weight:700; color:var(--accent);">{notif['title']}</div>
                 <div class="kap-card-summary" style="margin-top:0.5rem; font-size:0.85rem; line-height:1.5;">{notif['summary']}</div>
