@@ -76,6 +76,7 @@ def analyze_unread_notifications(progress_callback=None):
         }}
         """
         
+        # Primary call with llama-3.1-8b-instant (500,000+ TPD quota, super fast)
         try:
             response = client.chat.completions.create(
                 messages=[
@@ -84,7 +85,7 @@ def analyze_unread_notifications(progress_callback=None):
                         "content": prompt,
                     }
                 ],
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 response_format={"type": "json_object"},
             )
             
@@ -105,47 +106,14 @@ def analyze_unread_notifications(progress_callback=None):
                     res.get("financial_effect", "Veri yok"),
                     res.get("id")
                 ))
-                print(f"Successfully batch analyzed KAP {res.get('id')} using Groq")
+                print(f"Successfully batch analyzed KAP {res.get('id')} using Groq 8B")
             
             conn.commit()
-            time.sleep(2) # Groq has 30 RPM limits on free tier, 2s is safe
+            time.sleep(1) # Faster limits on 8B
             
         except Exception as e:
             print(f"Error processing batch with Groq: {e}")
-            if "429" in str(e) or "rate" in str(e).lower():
-                print("Rate limit hit on 70B model, falling back to llama-3.1-8b-instant...")
-                time.sleep(2)
-                try:
-                    fallback_prompt = f"Aşağıdaki KAP metnini özetle: {json.dumps(batch_input, ensure_ascii=False)}. SADECE şu JSON yapısını ver: {{\"notifications\": [{{\"id\": {batch[0]['id']}, \"summary\": \"Özet metin\", \"positive_side\": \"Veri yok\", \"negative_side\": \"Veri yok\", \"signal\": \"Nötr\", \"kap_impact\": 5, \"financial_effect\": \"Veri yok\"}}]}}"
-                    response = client.chat.completions.create(
-                        messages=[{"role": "user", "content": fallback_prompt}],
-                        model="llama-3.1-8b-instant",
-                        response_format={"type": "json_object"},
-                    )
-                    raw_json = response.choices[0].message.content
-                    results = json.loads(raw_json).get("notifications", [])
-                    for res in results:
-                        c.execute('''
-                            UPDATE kap_notifications 
-                            SET summary = ?, positive_side = ?, negative_side = ?, signal = ?, kap_impact = ?, financial_effect = ?, is_read = 1
-                            WHERE id = ?
-                        ''', (
-                            res.get("summary", "Analiz yapılamadı"),
-                            res.get("positive_side", "Veri yok"),
-                            res.get("negative_side", "Veri yok"),
-                            res.get("signal", "Nötr"),
-                            res.get("kap_impact", 5),
-                            res.get("financial_effect", "Veri yok"),
-                            res.get("id")
-                        ))
-                    conn.commit()
-                except Exception as e2:
-                    print(f"Fallback 8B processing failed: {e2}")
-            elif "400" in str(e) or "json_validate_failed" in str(e).lower():
-                print("JSON validation failed by Llama 3, skipping batch for now, will retry next run.")
-                time.sleep(2)
-            else:
-                time.sleep(2)
+            time.sleep(2)
             
     conn.close()
 
