@@ -113,13 +113,13 @@ def analyze_unread_notifications(progress_callback=None):
         except Exception as e:
             print(f"Error processing batch with Groq: {e}")
             if "429" in str(e) or "rate" in str(e).lower():
-                print("Rate limit hit, sleeping for 15 seconds and retrying...")
-                time.sleep(15)
-                # Retry once
+                print("Rate limit hit on 70B model, falling back to llama-3.1-8b-instant (which has 500,000+ TPD limit)...")
+                time.sleep(3)
+                # Retry once using 8B model (which has 5x higher quota!)
                 try:
                     response = client.chat.completions.create(
                         messages=[{"role": "user", "content": prompt}],
-                        model="llama-3.3-70b-versatile",
+                        model="llama-3.1-8b-instant",
                         response_format={"type": "json_object"},
                     )
                     raw_json = response.choices[0].message.content
@@ -140,7 +140,7 @@ def analyze_unread_notifications(progress_callback=None):
                         ))
                     conn.commit()
                 except Exception as e2:
-                    print(f"Retry failed: {e2}")
+                    print(f"Retry with 8B model failed: {e2}")
             elif "400" in str(e) or "json_validate_failed" in str(e).lower():
                 print("JSON validation failed by Llama 3, skipping batch for now, will retry next run.")
                 time.sleep(2)
