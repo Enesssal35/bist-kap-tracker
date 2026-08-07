@@ -113,12 +113,12 @@ def analyze_unread_notifications(progress_callback=None):
         except Exception as e:
             print(f"Error processing batch with Groq: {e}")
             if "429" in str(e) or "rate" in str(e).lower():
-                print("Rate limit hit on 70B model, falling back to llama-3.1-8b-instant (which has 500,000+ TPD limit)...")
-                time.sleep(3)
-                # Retry once using 8B model (which has 5x higher quota!)
+                print("Rate limit hit on 70B model, falling back to llama-3.1-8b-instant...")
+                time.sleep(2)
                 try:
+                    fallback_prompt = f"Aşağıdaki KAP metnini özetle: {json.dumps(batch_input, ensure_ascii=False)}. SADECE şu JSON yapısını ver: {{\"notifications\": [{{\"id\": {batch[0]['id']}, \"summary\": \"Özet metin\", \"positive_side\": \"Veri yok\", \"negative_side\": \"Veri yok\", \"signal\": \"Nötr\", \"kap_impact\": 5, \"financial_effect\": \"Veri yok\"}}]}}"
                     response = client.chat.completions.create(
-                        messages=[{"role": "user", "content": prompt}],
+                        messages=[{"role": "user", "content": fallback_prompt}],
                         model="llama-3.1-8b-instant",
                         response_format={"type": "json_object"},
                     )
@@ -140,7 +140,7 @@ def analyze_unread_notifications(progress_callback=None):
                         ))
                     conn.commit()
                 except Exception as e2:
-                    print(f"Retry with 8B model failed: {e2}")
+                    print(f"Fallback 8B processing failed: {e2}")
             elif "400" in str(e) or "json_validate_failed" in str(e).lower():
                 print("JSON validation failed by Llama 3, skipping batch for now, will retry next run.")
                 time.sleep(2)

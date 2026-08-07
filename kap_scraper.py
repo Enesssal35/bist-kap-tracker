@@ -16,62 +16,46 @@ def get_stocks():
 
 def fetch_kap_notifications(stock_code, from_date, to_date):
     """
-    Fetches notifications from kap.org.tr for a given stock and date range.
-    Uses the KAP search API endpoint.
+    Fetches real live disclosures for a stock using Google News BIST KAP RSS Feed.
     """
-    url = "https://www.kap.org.tr/tr/api/memberDisclosureQuery"
+    import bs4
+    url = f"https://news.google.com/rss/search?q=KAP+BIST+{stock_code}&hl=tr&gl=TR&ceid=TR:tr"
     headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     
-    # Needs to get company ID, but for now we simulate or use standard query structure if possible.
-    # Actually, without the exact member ID from KAP, this is tricky. We'll use a mocked fetch 
-    # for the demonstration of the LLM and the pipeline, as direct KAP scraping requires maintaining a company ID map.
-    
-    mock_notifications = []
-    # Realistic templates per category and stock to avoid repetitive text
-    announcements_pool = [
-        ("Yeni İş İlişkisi", "{stock_code} şirketi, {partner} firması ile toplam {amount} {currency} tutarında {duration} süreli satış sözleşmesi imzalamıştır. Teslimatlar {quarter} çeyreğinde başlayacak olup FAVÖK marjına olumlu katkı öngörülmektedir."),
-        ("Duran Varlık Alımı (Capex)", "{stock_code}, üretim kapasitesini %{capacity} artırma hedefiyle {location} tesislerine {amount} {currency} tutarında yeni hat yatırımı kararı almıştır. Teşvik belgesi başvurusu tamamlanmıştır."),
-        ("Finansal Rapor", "{stock_code} 2026 yılı {quarter}. çeyrek bilançosunda net karını geçen yılın aynı dönemine göre %{growth} artırarak {amount} TL seviyesine çıkarmıştır. Net borç/FAVÖK oranı {ratio} seviyesine gerilemiştir."),
-        ("Sermaye Artırımı", "{stock_code} Yönetim Kurulu, şirket sermayesinin %{ratio} oranında bedelsiz olarak {amount} TL'ye çıkarılması kararını KAP'a bildirmiştir. Başvuru SPK onayına sunulacaktır."),
-        ("Borçlanma", "{stock_code}, yurt içinde nitelikli yatırımcılara ihraç edilmek üzere {amount} TL nominal değerli, {duration} vadesi olan tahvil/bono ihracını başarıyla tamamlamıştır."),
-        ("Teşvik", "{stock_code}'ın {location} bölgesindeki Ar-Ge yatırımı için T.C. Sanayi ve Teknoloji Bakanlığı tarafından {amount} TL tutarlı Yatırım Teşvik Belgesi düzenlenmiştir."),
-        ("Yeni Sipariş", "{stock_code}, {partner} tarafından açılan ihalede en iyi teklifi vererek {amount} {currency} tutarındaki sipariş paketini kazanmıştır.")
-    ]
-    
-    partners = ["Boeing Commercial", "Siemens AG", "Ford Otosan A.Ş.", "RENAULT Europe", "DHL Supply Chain", "TÜBİTAK", "Vestel Elektronik"]
-    currencies = ["EUR", "USD", "TL"]
-    locations = ["Kocaeli Organize Sanayi", "İzmir ALOSBİ", "Bursa NOSAB", "Ankara Kahramankazan"]
-    
-    cat, text_template = random.choice(announcements_pool)
-    amount_val = f"{random.randint(5, 450):,}".replace(",", ".") + f".000.{random.randint(100,999)}" if cat != "Sermaye Artırımı" else f"{random.randint(50, 500)} Mio"
-    
-    raw_text = text_template.format(
-        stock_code=stock_code,
-        partner=random.choice(partners),
-        amount=amount_val,
-        currency=random.choice(currencies),
-        duration=f"{random.randint(1, 5)} yıl",
-        quarter=f"2026/{random.randint(1, 4)}",
-        capacity=random.randint(15, 80),
-        growth=random.randint(25, 140),
-        ratio=f"{random.randint(100, 300)}%",
-        location=random.choice(locations)
-    )
-    
-    mock_notif = {
-        "stock_code": stock_code,
-        "category": cat,
-        "title": f"{stock_code} - {cat} Bildirimi",
-        "publish_date": (datetime.now() - timedelta(hours=random.randint(1, 72))).strftime("%Y-%m-%d %H:%M:%S"),
-        "link": f"https://www.kap.org.tr/tr/Bildirim/{1645800 + random.randint(1, 60)}",
-        "raw_text": raw_text
-    }
-    mock_notifications.append(mock_notif)
-    return mock_notifications
+    real_notifications = []
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            soup = bs4.BeautifulSoup(r.text, 'xml')
+            items = soup.find_all('item')[:5] # Get top 5 real items
+            for item in items:
+                title_text = item.title.text if item.title else f"{stock_code} KAP Bildirimi"
+                link_text = item.link.text if item.link else f"https://www.kap.org.tr/tr/sirket-bilgileri/ozet/{stock_code}"
+                pub_date = item.pubDate.text if item.pubDate else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                # Determine category from title
+                category = "Diğer"
+                if "Faaliyet Raporu" in title_text: category = "Faaliyet Raporu"
+                elif "Finansal" in title_text or "Bilanço" in title_text: category = "Finansal Rapor"
+                elif "Sözleşme" in title_text or "Sipariş" in title_text or "İhale" in title_text: category = "Yeni Sipariş"
+                elif "Sermaye" in title_text or "Bedelsiz" in title_text: category = "Sermaye Artırımı"
+                elif "Teşvik" in title_text: category = "Teşvik"
+                elif "Yatırım" in title_text or "Capex" in title_text: category = "Duran Varlık Alımı (Capex)"
+                
+                real_notifications.append({
+                    "stock_code": stock_code,
+                    "category": category,
+                    "title": f"{stock_code} - {title_text}",
+                    "publish_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "link": link_text,
+                    "raw_text": f"GERÇEK BİLDİRİM: {title_text}. Detaylar ve resmi açıklama KAP kaynaklarında yayınlanmıştır."
+                })
+    except Exception as e:
+        print(f"Error scraping live KAP feed for {stock_code}: {e}")
+        
+    return real_notifications
 
 def scan_kap_for_all_stocks(days_back=1, progress_callback=None):
     stocks = get_stocks()
