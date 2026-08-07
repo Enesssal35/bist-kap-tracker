@@ -67,7 +67,7 @@ def fetch_kap_notifications(stock_code, from_date, to_date):
         "category": cat,
         "title": f"{stock_code} - {cat} Bildirimi",
         "publish_date": (datetime.now() - timedelta(hours=random.randint(1, 72))).strftime("%Y-%m-%d %H:%M:%S"),
-        "link": f"https://www.kap.org.tr/tr/sirket-bilgileri/ozet/{stock_code}#notif-{random.randint(100000, 999999)}",
+        "link": f"https://www.kap.org.tr/tr/BildirimSorgu#{stock_code}-{random.randint(10000, 99999)}",
         "raw_text": raw_text
     }
     mock_notifications.append(mock_notif)
