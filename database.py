@@ -25,7 +25,7 @@ def init_db():
     # Insert default stocks if none exist
     c.execute('SELECT COUNT(*) FROM stocks')
     if c.fetchone()[0] == 0:
-        default_stocks = ['EGEEN', 'FROTO', 'CLEBI', 'BRSAN', 'CCOLA', 'PGSUS', 'OTKAR', 'ISMEN', 'ANSGR', 'LOGO', 'LKMNH', 'ALKA', 'ALTNY', 'SODSN']
+        default_stocks = ['BRSAN', 'PGSUS', 'EGEEN', 'FROTO', 'CCOLA', 'CLEBI', 'OTKAR', 'ISMEN', 'ANSGR', 'LOGO', 'LKMNH', 'ALKA', 'ALTNY', 'SDTTR']
         for stock in default_stocks:
             c.execute('INSERT INTO stocks (code) VALUES (?)', (stock,))
 
@@ -60,7 +60,7 @@ def init_db():
             negative_side TEXT,
             signal TEXT, -- Positive, Negative, Neutral
             kap_impact INTEGER, -- 1-10
-            financial_impact TEXT,
+            financial_effect TEXT,
             is_read INTEGER DEFAULT 0
         )
     ''')

@@ -15,6 +15,27 @@ import threading
 
 app = FastAPI(title="BIST KAP Tracker")
 
+# ── Startup: DB boşsa otomatik doldur ──────────────────────────────────────
+def startup_populate():
+    """Render her yeniden başladığında DB boşsa scrape + analiz yapar."""
+    import time
+    time.sleep(3)  # uvicorn tamamen kalksın
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM kap_notifications WHERE is_read=1")
+    count = c.fetchone()[0]
+    conn.close()
+    if count == 0:
+        print("[STARTUP] DB bos, otomatik tarama baslatiliyor...")
+        try:
+            scan_kap_for_all_stocks(days_back=30)
+            analyze_unread_notifications()
+            print("[STARTUP] Tarama tamamlandi.")
+        except Exception as e:
+            print(f"[STARTUP] Hata: {e}")
+
+threading.Thread(target=startup_populate, daemon=True).start()
+
 # Setup scheduler
 scheduler = BackgroundScheduler()
 
@@ -27,6 +48,7 @@ def scheduled_kap_scan():
 scheduler.add_job(scheduled_kap_scan, 'cron', hour=9, minute=30)
 scheduler.add_job(scheduled_kap_scan, 'cron', hour=16, minute=0)
 scheduler.start()
+
 
 # API Routes
 @app.get("/api/stocks")
