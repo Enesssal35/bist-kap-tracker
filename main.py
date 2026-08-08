@@ -288,29 +288,45 @@ def get_kap_notifications_html(
         financial_eff = notif.get('financial_effect', 'Veri yok')
         if not financial_eff: financial_eff = 'Veri yok'
         
+        copy_text = f"""1. Kategori: {notif['stock_code']} - {notif['category']}
+2. Başlık: {notif['title']}
+3. Özet: {notif['summary']}
+4. 🟢 Pozitif Etki: {notif['positive_side']}
+5. 🔴 Negatif Yön/Risk: {notif['negative_side']}
+6. Sinyal: {notif['signal']}
+7. KAP Etki Skoru: {notif['kap_impact']}/10
+8. Finansal Metriklere Yönelik Tahmin: {financial_eff}"""
+
         html += f"""
             <div class="kap-card">
                 <div class="kap-card-meta" style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.3rem;">
-                    <span>{notif['stock_code']} - {notif['category']}</span>
+                    <span><strong>1. Kategori:</strong> {notif['stock_code']} - {notif['category']}</span>
                     <span style="font-size:0.7rem; color:var(--accent); background:rgba(6,182,212,0.1); padding:0.15rem 0.5rem; border-radius:4px; font-weight:600;">🕒 {formatted_date}</span>
                 </div>
-                <div class="kap-card-title" style="margin-top:0.5rem; font-size:1rem; font-weight:700; color:var(--accent);">{notif['title']}</div>
-                <div class="kap-card-summary" style="margin-top:0.5rem; font-size:0.85rem; line-height:1.5;">{notif['summary']}</div>
+                <div class="kap-card-title" style="margin-top:0.5rem; font-size:1rem; font-weight:700; color:var(--accent);">
+                    <strong>2. Başlık:</strong> {notif['title']}
+                </div>
+                <div class="kap-card-summary" style="margin-top:0.5rem; font-size:0.85rem; line-height:1.5;">
+                    <strong>3. Özet:</strong> {notif['summary']}
+                </div>
                 
                 <div style="margin-top:0.8rem; display:flex; flex-direction:column; gap:0.4rem; font-size:0.8rem; background:rgba(0,0,0,0.2); padding:0.8rem; border-radius:6px; border-left:3px solid var(--border-color);">
-                    <div style="color:var(--positive)">🟢 <strong>Olumlu Taraf:</strong> {notif['positive_side']}</div>
-                    <div style="color:var(--negative)">🔴 <strong>Olumsuz Yön/Risk:</strong> {notif['negative_side']}</div>
+                    <div style="color:var(--positive)">🟢 <strong>4. Pozitif Etki:</strong> {notif['positive_side']}</div>
+                    <div style="color:var(--negative)">🔴 <strong>5. Negatif Yön/Risk:</strong> {notif['negative_side']}</div>
                     <div style="color:var(--neutral); border-top:1px dashed rgba(255,255,255,0.1); padding-top:0.4rem; margin-top:0.2rem;">
-                        <strong>ROE/ROIC/WACC Etkisi:</strong> {financial_eff}
+                        <strong>8. Finansal Metriklere Yönelik Tahmin:</strong> {financial_eff}
                     </div>
                 </div>
                 
                 <div style="margin-top:auto; padding-top:0.8rem; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
-                    <div style="display:flex; gap:0.5rem;">
-                        <span style="background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:4px; font-weight:700; color:{sigCol}">Sinyal: {notif['signal']}</span>
-                        <span style="background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:4px; font-weight:700;">KAP Etkisi: {notif['kap_impact']}/10</span>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <span style="background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:4px; font-weight:700; color:{sigCol}">6. Sinyal: {notif['signal']}</span>
+                        <span style="background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:4px; font-weight:700;">7. Etki Skoru: {notif['kap_impact']}/10</span>
                     </div>
-                    <a href="{notif['link']}" target="_blank" style="color:var(--accent); text-decoration:none;">Detay &rarr;</a>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button onclick="navigator.clipboard.writeText(`{copy_text.strip()}`); this.innerText='✓ Kopyalandı'; setTimeout(()=>this.innerText='📋 Kopyala', 2000);" style="background:rgba(6,182,212,0.15); color:var(--accent); border:1px solid var(--accent); padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem; font-weight:600;">📋 Kopyala</button>
+                        <a href="{notif['link']}" target="_blank" style="color:var(--accent); text-decoration:none; display:inline-flex; align-items:center;">Detay &rarr;</a>
+                    </div>
                 </div>
             </div>
         """

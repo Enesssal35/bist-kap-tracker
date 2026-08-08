@@ -39,38 +39,47 @@ def analyze_unread_notifications(progress_callback=None):
             remaining_batches = (total - i) // batch_size + 1
             progress_callback(batch[0]['stock_code'], remaining_batches * 3)
             
-        # Prepare batch input
+        # Prepare batch input — include full raw body text scraped from KAP page
         batch_input = []
         for row in batch:
+            # 'summary' column holds the raw_text scraped from the KAP bildirim page
+            body_text = row['summary'] or ""
             batch_input.append({
                 "id": row['id'],
                 "stock": row['stock_code'],
-                "text": row['summary']
+                "category": row['category'],
+                "title": row['title'],
+                "bildirim_body": body_text  # Full scraped body text from KAP page
             })
-            
+
         prompt = f"""
-        Aşağıdaki KAP bildirimini profesyonel bir yatırımcı bakış açısıyla analiz et.
-        DİKKAT KESİNLİKLE UYMAN GEREKEN KURALLAR:
-        1. ASLA BAŞKA HİSSE İSMİ KARIŞTIRMA! Sadece gelen verideki '{batch[0]['stock_code']}' hissesine ait bilgileri yaz!
-        2. ASLA SAHTE VEYA ÖRNEK VERİ UYDURMA!
-        3. SADECE aşağıda "Gelen Veri" bölümünde sana verdiğim GERÇEK 'text' içeriğini oku ve özetle.
-        4. Metinde rakam yoksa kesinlikle 'veri yok' yaz.
-        5. JSON Object formatında çıktı ver. Mutlaka bir "notifications" anahtarı olsun ve değeri DİZİ (Array) olsun.
+        Sen profesyonel bir hisse senedi ve finansal veri analistisin.
         
-        Gelen Veri (BURADAKİ TEXTLERİ KULLAN):
+        Görevin: Aşağıdaki KAP (Kamuyu Aydınlatma Platformu) bildiriminin tam metnini oku ve sadece o metindeki somut, doğrulanmış verilere dayanarak analiz üret.
+
+        ÖNEMLİ KURALLAR:
+        1. "bildirim_body" alanındaki KAP metninin içindeki GERÇEK rakamları, tutarları, tarihleri ve tarafları kullan.
+        2. Metinde finansal rakam veya etki belirtilmemişse asla varsayımsal sayı uydurma → 'Veri yok' yaz.
+        3. Sadece '{batch[0]['stock_code']}' hissesini analiz et, başka hisse karıştırma.
+        4. Profesyonel, kurumsal ve abartısız bir dil kullan.
+        5. JSON Object formatında çıktı ver.
+
+        Analiz Edilecek KAP Bildirimi:
         {json.dumps(batch_input, ensure_ascii=False)}
-        
+
         İstenen JSON Formatı:
         {{
             "notifications": [
                 {{
-                    "id": <GELEN VERİDEKİ ID İLE AYNI OLMALI>,
-                    "summary": "Metindeki gerçek olayın 2-3 cümlelik özeti",
-                    "positive_side": "Gerçek kazanımlar (yoksa 'Veri yok' yaz)",
-                    "negative_side": "Gerçek riskler (yoksa 'Veri yok' yaz)",
+                    "id": {batch[0]['id']},
+                    "category": "Bildirimin gerçek kategorisi (ör: {batch[0]['stock_code']} - Finansal Rapor)",
+                    "title": "Bildirimin içeriğini özetleyen kısa ve çarpıcı başlık",
+                    "summary": "KAP metniндeki rakamlar, tarihler ve tarafları içeren 2-3 cümlelik özet",
+                    "positive_side": "Nakit akışı, marj, pazar payı veya operasyonel kazanım (metinde yoksa → 'Veri yok')",
+                    "negative_side": "Kur, maliyet, sektörel veya uygulama riskleri (metinde yoksa → 'Veri yok')",
                     "signal": "Pozitif, Negatif veya Nötr",
-                    "kap_impact": 7,
-                    "financial_effect": "Finansal etki (yoksa 'Veri yok' yaz)"
+                    "kap_impact": 5,
+                    "financial_effect": "Metinde yeterli veri varsa ROE/ROIC/WACC veya Net EVA üzerine yönsel etki. Yoksa → 'Yönsel veri yok'"
                 }}
             ]
         }}
